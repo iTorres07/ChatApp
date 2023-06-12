@@ -69,15 +69,18 @@ class GroupFirebaseDataSourceImpl implements GroupFirebaseDataSource {
     final messageId = messagesCollection.doc().id;
 
     final newTextMessage = TextMessageModel(
-            content: textMessageEntity.content,
-            senderName: textMessageEntity.senderName,
-            senderId: textMessageEntity.senderId,
-            recipientId: textMessageEntity.recipientId,
-            receiverName: textMessageEntity.receiverName,
-            time: textMessageEntity.time,
-            messageId: messageId,
-            type: "TEXT")
-        .toDocument();
+      content: textMessageEntity.content,
+      senderName: textMessageEntity.senderName,
+      senderId: textMessageEntity.senderId,
+      recipientId: textMessageEntity.recipientId,
+      receiverName: textMessageEntity.receiverName,
+      time: textMessageEntity.time,
+      messageId: messageId,
+      type: "TEXT",
+      videoUrl: textMessageEntity.videoUrl,
+      imageUrl: textMessageEntity.imageUrl,
+      audioUrl: textMessageEntity.audioUrl,
+    ).toDocument();
 
     await messagesCollection.doc(messageId).set(newTextMessage);
   }

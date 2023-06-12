@@ -10,19 +10,53 @@ class TextMessageEntity extends Equatable {
   final String? content;
   final String? receiverName;
   final String? messageId;
+  final String? videoUrl; // URL del archivo multimedia
+  final String? imageUrl;
+  final String? audioUrl;
 
-  TextMessageEntity(
-      {this.recipientId,
-      this.senderId,
-      this.senderName,
-      this.type,
-      this.time,
-      this.content,
-      this.receiverName,
-      this.messageId});
+  TextMessageEntity({
+    this.recipientId,
+    this.senderId,
+    this.senderName,
+    this.type,
+    this.time,
+    this.content,
+    this.receiverName,
+    this.messageId,
+    this.audioUrl,
+    this.imageUrl,
+    this.videoUrl,
+  });
+
+  TextMessageEntity copyWith({
+    String? recipientId,
+    String? senderId,
+    String? senderName,
+    String? type,
+    Timestamp? time,
+    String? content,
+    String? receiverName,
+    String? messageId,
+    String? audioUrl,
+    String? imageUrl,
+    String? videoUrl,
+  }) {
+    return TextMessageEntity(
+      recipientId: recipientId ?? this.recipientId,
+      senderId: senderId ?? this.senderId,
+      senderName: senderName ?? this.senderName,
+      type: type ?? this.type,
+      time: time ?? this.time,
+      content: content ?? this.content,
+      receiverName: receiverName ?? this.receiverName,
+      messageId: messageId ?? this.messageId,
+      audioUrl: audioUrl ?? this.audioUrl,
+      imageUrl: imageUrl ?? this.imageUrl,
+      videoUrl: videoUrl ?? this.videoUrl,
+    );
+  }
 
   @override
-  // TODO: implement props
   List<Object?> get props => [
         recipientId,
         senderId,
@@ -31,6 +65,9 @@ class TextMessageEntity extends Equatable {
         time,
         content,
         receiverName,
-        messageId
+        messageId,
+        audioUrl,
+        videoUrl,
+        imageUrl,
       ];
 }

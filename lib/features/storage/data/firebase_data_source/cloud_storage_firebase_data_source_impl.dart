@@ -40,4 +40,59 @@ class CloudStorageFirebaseDataSourceImpl
   static String getNameOnly(String path) {
     return path.split('/').last.split('%').last.split("?").first;
   }
+
+  @override
+  Future<String> uploadImage({required File file}) async {
+    final ref = storage.ref().child(
+          "files/${DateTime.now().millisecondsSinceEpoch}${getNameOnly(file.path)}",
+        );
+
+    final uploadTask = ref.putFile(file);
+
+    final imageUrl =
+        (await uploadTask.whenComplete(() {})).ref.getDownloadURL();
+
+    return imageUrl;
+  }
+
+  @override
+  Future<String> uploadVideo({required File file}) async {
+    final ref = storage.ref().child(
+          "files/${DateTime.now().millisecondsSinceEpoch}${getNameOnly(file.path)}",
+        );
+
+    final uploadTask = ref.putFile(file);
+
+    final videoUrl =
+        (await uploadTask.whenComplete(() {})).ref.getDownloadURL();
+
+    return videoUrl;
+  }
+
+  @override
+  Future<String> uploadAudio({required File file}) async {
+    final ref = storage.ref().child(
+          "files/${DateTime.now().millisecondsSinceEpoch}${getNameOnly(file.path)}",
+        );
+
+    final uploadTask = ref.putFile(file);
+
+    final audioUrl =
+        (await uploadTask.whenComplete(() {})).ref.getDownloadURL();
+
+    return audioUrl;
+  }
+
+  @override
+  Future<String> uploadGif({required File file}) async {
+    final ref = storage.ref().child(
+          "files/${DateTime.now().millisecondsSinceEpoch}${getNameOnly(file.path)}",
+        );
+
+    final uploadTask = ref.putFile(file);
+
+    final gifUrl = (await uploadTask.whenComplete(() {})).ref.getDownloadURL();
+
+    return gifUrl;
+  }
 }

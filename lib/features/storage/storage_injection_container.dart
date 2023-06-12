@@ -5,13 +5,22 @@ import 'package:chat_app_1/features/storage/data/repository/cloud_storage_reposi
 import 'package:chat_app_1/features/storage/domain/repository/cloud_storage_repository.dart';
 import 'package:chat_app_1/features/storage/domain/usecases/upload_group_image_usecase.dart';
 import 'package:chat_app_1/features/storage/domain/usecases/upload_profile_image_usecase.dart';
+import 'package:chat_app_1/features/storage/domain/usecases/upload_image_usecase.dart';
+import 'package:chat_app_1/features/storage/domain/usecases/upload_video_usecase.dart';
+import 'package:chat_app_1/features/storage/domain/usecases/upload_audio_usecase.dart';
 
 Future<void> storageInjectionContainer() async {
-  ///UseCases
+  /// UseCases
   sl.registerLazySingleton<UploadProfileImageUseCase>(
       () => UploadProfileImageUseCase(repository: sl.call()));
   sl.registerLazySingleton<UploadGroupImageUseCase>(
       () => UploadGroupImageUseCase(repository: sl.call()));
+  sl.registerLazySingleton<UploadImageUseCase>(
+      () => UploadImageUseCase(repository: sl.call()));
+  sl.registerLazySingleton<UploadVideoUseCase>(
+      () => UploadVideoUseCase(repository: sl.call()));
+  sl.registerLazySingleton<UploadAudioUseCase>(
+      () => UploadAudioUseCase(repository: sl.call()));
 
   /// Repository
   sl.registerLazySingleton<CloudStorageRepository>(

@@ -11,6 +11,9 @@ class TextMessageModel extends TextMessageEntity {
     String? content,
     String? receiverName,
     String? messageId,
+    String? videoUrl,
+    String? audioUrl,
+    String? imageUrl,
   }) : super(
           recipientId: recipientId,
           senderId: senderId,
@@ -20,6 +23,9 @@ class TextMessageModel extends TextMessageEntity {
           content: content,
           receiverName: receiverName,
           messageId: messageId,
+          videoUrl: videoUrl,
+          audioUrl: audioUrl,
+          imageUrl: imageUrl,
         );
 
   factory TextMessageModel.fromSnapshot(DocumentSnapshot snapshot) {
@@ -32,6 +38,9 @@ class TextMessageModel extends TextMessageEntity {
       content: snapshot.get('content'),
       receiverName: snapshot.get('receiverName'),
       messageId: snapshot.get('messageId'),
+      imageUrl: snapshot.get('imageUrl'),
+      audioUrl: snapshot.get('audioUrl'),
+      videoUrl: snapshot.get('videoUrl'),
     );
   }
 
@@ -45,6 +54,9 @@ class TextMessageModel extends TextMessageEntity {
       "content": content,
       "receiverName": receiverName,
       "messageId": messageId,
+      "imageUrl": imageUrl,
+      "videoUrl": videoUrl,
+      "audioUrl": audioUrl,
     };
   }
 }
