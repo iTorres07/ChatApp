@@ -38,9 +38,9 @@ class _SingleChatPageState extends State<SingleChatPage> {
 
   final _picker = ImagePicker();
   final _storage = FirebaseStorage.instance;
-  TextEditingController _messageController = TextEditingController();
+  final TextEditingController _messageController = TextEditingController();
 
-  ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -63,7 +63,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("${widget.singleChatEntity.groupName}"),
+        title: Text(widget.singleChatEntity.groupName),
       ),
       body: Stack(
         children: [
@@ -126,7 +126,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    "$name",
+                    name,
                     textAlign: alignName,
                     style: const TextStyle(
                         fontSize: 17, fontWeight: FontWeight.bold),
@@ -252,12 +252,10 @@ class _SingleChatPageState extends State<SingleChatPage> {
 
   void _clear() {
     setState(() {
-      _messageController.clear();
       _selectedImage = null;
       _selectedVideo = null;
       _selectedAudio = null;
-      _videoPlayerController?.dispose();
-      _videoPlayerController = null;
+      _messageController.clear();
     });
   }
 
@@ -312,9 +310,9 @@ class _SingleChatPageState extends State<SingleChatPage> {
   }
 
   Widget _buildMessageContent(TextMessageEntity message) {
-    if (message.imageUrl != null) {
+    if (message.content!.contains("png")) {
       return CachedNetworkImage(
-        imageUrl: message.imageUrl!,
+        imageUrl: message.content!,
         placeholder: (context, url) => const CircularProgressIndicator(),
         errorWidget: (context, url, error) => const Icon(Icons.error),
       );
@@ -393,49 +391,43 @@ class _SingleChatPageState extends State<SingleChatPage> {
   }
 
   Future<void> _pickAudio() async {
-    final pickedAudio = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['mp3', 'wav'], // Extensiones permitidas
-    );
+    FilePickerResult? result =
+        await FilePicker.platform.pickFiles(type: FileType.audio);
 
-    if (pickedAudio != null) {
+    if (result != null) {
       setState(() {
-        _selectedAudio = File(pickedAudio.files.single.name);
+        _selectedAudio = File(result.files.single.path!);
       });
     }
   }
 
   Future<void> _sendImageMessage() async {
-    final ref = _storage
-        .ref()
-        .child('images/${DateTime.now().millisecondsSinceEpoch}.jpg');
-    final uploadTask = ref.putFile(_selectedImage!);
+    if (_selectedImage != null) {
+      final ref = _storage
+          .ref()
+          .child('chat_images/${DateTime.now().toIso8601String()}');
+      await ref.putFile(_selectedImage!);
+      final imageUrl = await ref.getDownloadURL();
 
-    await uploadTask.whenComplete(() => null);
-
-    final imageUrl = await ref.getDownloadURL();
-
-    BlocProvider.of<ChatCubit>(context)
-        .sendTextMessage(
-            textMessageEntity: TextMessageEntity(
-                time: Timestamp.now(),
-                content: imageUrl,
-                senderName: widget.singleChatEntity.username,
-                senderId: widget.singleChatEntity.uid,
-                type: "TEXT"),
-            channelId: widget.singleChatEntity.groupId)
-        .then((value) {
-      BlocProvider.of<GroupCubit>(context).updateGroup(
-          groupEntity: GroupEntity(
-        groupId: widget.singleChatEntity.groupId,
-        lastMessage: _messageController.text,
-        createAt: Timestamp.now(),
-      ));
-      _clear();
-    });
-
-    // Limpiar la selección de archivos
-    _clear();
+      BlocProvider.of<ChatCubit>(context)
+          .sendTextMessage(
+              textMessageEntity: TextMessageEntity(
+                  time: Timestamp.now(),
+                  content: imageUrl,
+                  senderName: widget.singleChatEntity.username,
+                  senderId: widget.singleChatEntity.uid,
+                  type: "TEXT"),
+              channelId: widget.singleChatEntity.groupId)
+          .then((value) {
+        BlocProvider.of<GroupCubit>(context).updateGroup(
+            groupEntity: GroupEntity(
+          groupId: widget.singleChatEntity.groupId,
+          lastMessage: _messageController.text,
+          createAt: Timestamp.now(),
+        ));
+        _clear();
+      });
+    }
   }
 
   Future<void> _sendVideoMessage() async {
