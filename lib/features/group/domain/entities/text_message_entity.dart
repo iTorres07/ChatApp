@@ -14,7 +14,7 @@ class TextMessageEntity extends Equatable {
   final String? imageUrl;
   final String? audioUrl;
 
-  TextMessageEntity({
+  const TextMessageEntity({
     this.recipientId,
     this.senderId,
     this.senderName,

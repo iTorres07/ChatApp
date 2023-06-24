@@ -9,7 +9,7 @@ class GroupEntity extends Equatable {
   final String? uid;
   final String? lastMessage;
 
-  GroupEntity({
+  const GroupEntity({
     this.groupName,
     this.groupProfileImage,
     this.createAt,

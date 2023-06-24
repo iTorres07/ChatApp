@@ -12,7 +12,7 @@ class GroupInitial extends GroupState {
 class GroupLoaded extends GroupState {
   final List<GroupEntity> groups;
 
-  GroupLoaded({required this.groups});
+  const GroupLoaded({required this.groups});
 
   @override
   List<Object> get props => [groups];

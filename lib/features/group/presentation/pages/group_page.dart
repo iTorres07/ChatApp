@@ -24,7 +24,7 @@ class _GroupPageState extends State<GroupPage> {
           Navigator.pushNamed(context, PageConst.createGroupPage,
               arguments: widget.uid);
         },
-        child: Icon(Icons.groups),
+        child: const Icon(Icons.groups),
       ),
       body: BlocBuilder<SingleUserCubit, SingleUserState>(
         builder: (context, singleUserSate) {
@@ -36,7 +36,7 @@ class _GroupPageState extends State<GroupPage> {
                 if (groupState is GroupLoaded) {
                   final groups = groupState.groups;
                   return groups.isEmpty
-                      ? Center(child: Text("No Group Created Yet"))
+                      ? const Center(child: Text("No Group Created Yet"))
                       : ListView.builder(
                           itemCount: groups.length,
                           itemBuilder: (BuildContext context, int index) {
@@ -53,7 +53,7 @@ class _GroupPageState extends State<GroupPage> {
                               },
                               title: Text("${groupInfo.groupName}"),
                               subtitle: Text("${groupInfo.lastMessage}"),
-                              leading: Container(
+                              leading: SizedBox(
                                 height: 50,
                                 width: 50,
                                 child: ClipRRect(
@@ -64,7 +64,7 @@ class _GroupPageState extends State<GroupPage> {
                                     placeHolderBoxFit: BoxFit.cover,
                                     networkImageBoxFit: BoxFit.cover,
                                     imageUrl: groupInfo.groupProfileImage,
-                                    progressIndicatorBuilder: Center(
+                                    progressIndicatorBuilder: const Center(
                                       child: CircularProgressIndicator(),
                                     ),
                                     placeHolder: "assets/profile_default.png",
@@ -75,14 +75,14 @@ class _GroupPageState extends State<GroupPage> {
                           });
                 }
 
-                return Center(
+                return const Center(
                   child: CircularProgressIndicator(),
                 );
               },
             );
           }
 
-          return Center(
+          return const Center(
             child: CircularProgressIndicator(),
           );
         },

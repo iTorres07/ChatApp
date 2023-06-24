@@ -16,10 +16,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await di.init();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -47,7 +49,7 @@ class MyApp extends StatelessWidget {
                     uid: authState.uid,
                   );
                 } else {
-                  return LoginPage();
+                  return const LoginPage();
                 }
               },
             );

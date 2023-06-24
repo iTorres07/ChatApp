@@ -29,7 +29,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
 
   bool _isImageUploading = false;
 
-  TextEditingController _groupNameController = TextEditingController();
+  final TextEditingController _groupNameController = TextEditingController();
 
   @override
   void dispose() {
@@ -60,17 +60,17 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Create Group"),
+        title: const Text("Create Group"),
       ),
       body: Container(
-        margin: EdgeInsets.all(25),
+        margin: const EdgeInsets.all(25),
         child: Column(
           children: [
             InkWell(
               onTap: () {
                 getImage();
               },
-              child: Container(
+              child: SizedBox(
                 height: 80,
                 width: 80,
                 child: NetworkImageWidget(
@@ -80,14 +80,14 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                   placeHolderBoxFit: BoxFit.cover,
                   networkImageBoxFit: BoxFit.cover,
                   imageUrl: "",
-                  progressIndicatorBuilder: Center(
+                  progressIndicatorBuilder: const Center(
                     child: CircularProgressIndicator(),
                   ),
                   placeHolder: "assets/profile_default.png",
                 ),
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 14,
             ),
             Text(
@@ -95,7 +95,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
               style: TextStyle(
                   color: greenColor, fontSize: 16, fontWeight: FontWeight.w400),
             ),
-            SizedBox(
+            const SizedBox(
               height: 20,
             ),
             TextFieldContainer(
@@ -104,15 +104,15 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
               hintText: 'group name',
               prefixIcon: FontAwesomeIcons.edit,
             ),
-            SizedBox(
+            const SizedBox(
               height: 17,
             ),
-            Divider(
+            const Divider(
               thickness: 2,
               indent: 120,
               endIndent: 120,
             ),
-            SizedBox(
+            const SizedBox(
               height: 17,
             ),
             ContainerButton(
@@ -121,11 +121,11 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
               },
               title: "Create new Group",
             ),
-            SizedBox(
+            const SizedBox(
               height: 20,
             ),
             _isImageUploading == true
-                ? Row(
+                ? const Row(
                     children: [
                       Text("Please wait for moment..."),
                       SizedBox(
@@ -134,7 +134,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                       CircularProgressIndicator(),
                     ],
                   )
-                : Text(""),
+                : const Text(""),
           ],
         ),
       ),

@@ -92,17 +92,21 @@ class GroupFirebaseDataSourceImpl implements GroupFirebaseDataSource {
     final groupCollection = firestore.collection("groups");
 
     if (groupEntity.groupProfileImage != null &&
-        groupEntity.groupProfileImage != "")
+        groupEntity.groupProfileImage != "") {
       groupInformation['groupProfileImage'] = groupEntity.groupProfileImage;
+    }
 
-    if (groupEntity.createAt != null)
+    if (groupEntity.createAt != null) {
       groupInformation["createAt"] = groupEntity.createAt;
+    }
 
-    if (groupEntity.groupName != null && groupEntity.groupName != "")
+    if (groupEntity.groupName != null && groupEntity.groupName != "") {
       groupInformation["groupName"] = groupEntity.groupName;
+    }
 
-    if (groupEntity.lastMessage != null && groupEntity.lastMessage != "")
+    if (groupEntity.lastMessage != null && groupEntity.lastMessage != "") {
       groupInformation["lastMessage"] = groupEntity.lastMessage;
+    }
 
     groupCollection.doc(groupEntity.groupId).update(groupInformation);
   }
