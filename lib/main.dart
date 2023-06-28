@@ -16,6 +16,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await di.init();
+
+  final authCubit = di.sl<AuthCubit>();
+  await authCubit.appStarted();
+
   runApp(const MyApp());
 }
 
@@ -45,6 +49,7 @@ class MyApp extends StatelessWidget {
             return BlocBuilder<AuthCubit, AuthState>(
               builder: (context, authState) {
                 if (authState is Authenticated) {
+                  print('Authstate: ${authState.toString()}');
                   return HomePage(
                     uid: authState.uid,
                   );

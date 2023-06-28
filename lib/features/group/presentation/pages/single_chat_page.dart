@@ -16,7 +16,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:network_image/network_image.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
 class SingleChatPage extends StatefulWidget {
@@ -34,16 +34,21 @@ class _SingleChatPageState extends State<SingleChatPage> {
   File? _selectedVideo;
   File? _selectedAudio;
 
+  bool showMediaButtons = false;
+  late SharedPreferences _preferences;
   VideoPlayerController? _videoPlayerController;
 
   final _picker = ImagePicker();
   final _storage = FirebaseStorage.instance;
   final TextEditingController _messageController = TextEditingController();
 
-  final ScrollController _scrollController = ScrollController();
+  late ScrollController _scrollController;
 
   @override
   void initState() {
+    _initSharedPreferences();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_handleScroll);
     BlocProvider.of<ChatCubit>(context)
         .getMessages(channelId: widget.singleChatEntity.groupId);
     _messageController.addListener(() {
@@ -52,10 +57,28 @@ class _SingleChatPageState extends State<SingleChatPage> {
     super.initState();
   }
 
+  void _initSharedPreferences() async {
+    _preferences = await SharedPreferences.getInstance();
+    final double savedPosition = _preferences.getDouble('scroll_position') ?? 0;
+    _scrollController = ScrollController(initialScrollOffset: savedPosition);
+  }
+
+  void _saveScrollPosition() {
+    if (_scrollController.hasClients) {
+      _preferences.setDouble(
+          'scroll_position', _scrollController.position.pixels);
+    }
+  }
+
+  void _handleScroll() {
+    _saveScrollPosition();
+  }
+
   @override
   void dispose() {
-    _messageController.dispose();
+    _saveScrollPosition();
     _scrollController.dispose();
+    _messageController.dispose();
     super.dispose();
   }
 
@@ -79,22 +102,14 @@ class _SingleChatPageState extends State<SingleChatPage> {
             builder: (context, chatState) {
               if (chatState is ChatLoaded) {
                 final messages = chatState.messages;
-                return ListView.builder(
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final message = messages[index];
-                    return ListTile(
-                      title: _buildMessageContent(message),
-                    );
-                  },
-                );
+                return _messageListWidget(messages);
               }
               return const Center(child: CircularProgressIndicator());
             },
           ),
-          _sendMessageTextField(),
-          const SizedBox(
-            height: 20,
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: _sendMessageTextField(context),
           ),
         ],
       ),
@@ -102,154 +117,194 @@ class _SingleChatPageState extends State<SingleChatPage> {
   }
 
   Widget _messageLayout({
-    required String text,
-    required String time,
-    required Color color,
-    required TextAlign align,
-    required CrossAxisAlignment boxAlign,
-    required CrossAxisAlignment crossAlign,
     required String name,
     required TextAlign alignName,
+    required Color color,
+    required TextAlign align,
     required BubbleNip nip,
+    required CrossAxisAlignment boxAlign,
+    required CrossAxisAlignment crossAlign,
+    required String text,
+    required String time,
     required Widget content,
   }) {
-    return Column(
-      crossAxisAlignment: crossAlign,
-      children: [
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.90,
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            margin: const EdgeInsets.all(3),
-            child: Bubble(
-              color: color,
-              nip: nip,
-              child: Column(
-                crossAxisAlignment: crossAlign,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    name,
-                    textAlign: alignName,
-                    style: const TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    text,
-                    textAlign: align,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  Text(
-                    time,
-                    textAlign: align,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black.withOpacity(
-                        .4,
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      child: Column(
+        crossAxisAlignment: boxAlign,
+        children: [
+          Row(
+            mainAxisAlignment: boxAlign == CrossAxisAlignment.start
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.end,
+            children: [
+              Container(
+                constraints: const BoxConstraints(maxWidth: 200),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 1,
+                      blurRadius: 1,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: crossAlign,
+                  children: [
+                    Text(
+                      name,
+                      textAlign: alignName,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  )
-                ],
+                    const SizedBox(height: 5),
+                    content,
+                  ],
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            time,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.grey,
             ),
           ),
-        )
-      ],
+        ],
+      ),
     );
   }
 
-  _sendMessageTextField() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.all(Radius.circular(80)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(.2),
-                    offset: const Offset(0.0, 0.50),
-                    spreadRadius: 1,
-                    blurRadius: 1,
-                  )
-                ]),
-            child: Row(
-              children: [
-                const SizedBox(
-                  width: 10,
-                ),
-                Expanded(
-                  child: Container(
-                    constraints: const BoxConstraints(maxHeight: 60),
-                    child: Scrollbar(
-                      child: TextField(
-                        style: const TextStyle(fontSize: 14),
-                        controller: _messageController,
-                        maxLines: null,
-                        decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: "Type a message"),
+  _sendMessageTextField(BuildContext context) {
+    double baseWidth = 375;
+    double fem = MediaQuery.of(context).size.width / baseWidth;
+    return Padding(
+      padding: const EdgeInsets.all(5.0),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Row(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: showMediaButtons ? 135.0 * fem : 271.0 * fem,
+              child: Container(
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: const BorderRadius.all(Radius.circular(80)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(.2),
+                        offset: const Offset(0.0, 0.50),
+                        spreadRadius: 1,
+                        blurRadius: 1,
+                      )
+                    ]),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        constraints: const BoxConstraints(maxHeight: 60),
+                        child: Scrollbar(
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: TextField(
+                              style: const TextStyle(fontSize: 14),
+                              controller: _messageController,
+                              maxLines: null,
+                              decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  hintText: "Type a message"),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-        const SizedBox(width: 5),
-        IconButton(
-          onPressed: _pickImage,
-          icon: const Icon(Icons.image),
-          color: Colors.green,
-        ),
-        IconButton(
-          onPressed: _pickVideo,
-          icon: const Icon(Icons.videocam),
-          color: Colors.green,
-        ),
-        IconButton(
-          onPressed: _pickAudio,
-          icon: const Icon(Icons.audiotrack),
-          color: Colors.green,
-        ),
-        InkWell(
-          onTap: () {
-            if (_selectedImage != null) {
-              // Enviar imagen
-              _sendImageMessage();
-            } else if (_selectedVideo != null) {
-              // Enviar video
-              _sendVideoMessage();
-            } else if (_selectedAudio != null) {
-              // Enviar audio
-              _sendAudioMessage();
-            } else if (_messageController.text.isNotEmpty) {
-              // Enviar mensaje de texto
-              _sendTextMessage();
-            }
-          },
-          child: Container(
-            width: 45,
-            height: 45,
-            decoration: const BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.all(Radius.circular(50))),
-            child: Icon(
-              _messageController.text.isEmpty &&
-                      _selectedAudio.toString().isEmpty &&
-                      _selectedImage.toString().isEmpty &&
-                      _selectedVideo.toString().isEmpty
-                  ? Icons.mic
-                  : Icons.send,
-              color: Colors.white,
+            Expanded(
+              child: showMediaButtons
+                  ? AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: showMediaButtons ? 1.0 : 0.0,
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: _pickImage,
+                            icon: const Icon(Icons.image),
+                            color: Colors.green,
+                          ),
+                          IconButton(
+                            onPressed: _pickVideo,
+                            icon: const Icon(Icons.videocam),
+                            color: Colors.green,
+                          ),
+                          IconButton(
+                            onPressed: _pickAudio,
+                            icon: const Icon(Icons.audiotrack),
+                            color: Colors.green,
+                          ),
+                        ],
+                      ),
+                    )
+                  : SizedBox(),
             ),
-          ),
-        )
-      ],
+            IconButton(
+              icon: const Icon(Icons.attach_file),
+              color: Colors.green,
+              onPressed: () {
+                setState(() {
+                  showMediaButtons = !showMediaButtons;
+                });
+              },
+            ),
+            InkWell(
+              onTap: () {
+                if (_selectedImage != null) {
+                  // Enviar imagen
+                  _sendImageMessage();
+                } else if (_selectedVideo != null) {
+                  // Enviar video
+                  _sendVideoMessage();
+                } else if (_selectedAudio != null) {
+                  // Enviar audio
+                  _sendAudioMessage();
+                } else if (_messageController.text.isNotEmpty) {
+                  // Enviar mensaje de texto
+                  _sendTextMessage();
+                }
+              },
+              child: Container(
+                width: 45,
+                height: 45,
+                decoration: const BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.all(Radius.circular(50))),
+                child: Icon(
+                  _messageController.text.isEmpty &&
+                          _selectedAudio.toString().isEmpty &&
+                          _selectedImage.toString().isEmpty &&
+                          _selectedVideo.toString().isEmpty
+                      ? Icons.mic
+                      : Icons.send,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
     );
   }
 
@@ -262,52 +317,70 @@ class _SingleChatPageState extends State<SingleChatPage> {
     });
   }
 
-  _messageListWidget(List<TextMessageEntity> messages) {
+  Widget _messageListWidget(List<TextMessageEntity> messages) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    });
     if (_scrollController.hasClients) {
-      Timer(const Duration(milliseconds: 100), () {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeIn,
-        );
-      });
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     }
 
-    return Expanded(
-      child: ListView.builder(
-        itemCount: messages.length,
-        controller: _scrollController,
-        itemBuilder: (BuildContext context, int index) {
-          final singleMessage = messages[index];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 55.0),
+        child: ListView.builder(
+          itemCount: messages.length,
+          controller: _scrollController,
+          reverse: false,
+          itemBuilder: (BuildContext context, int index) {
+            final singleMessage = messages[index];
 
-          if (singleMessage.senderId == widget.singleChatEntity.uid) {
-            return _messageLayout(
-              name: "Me",
-              alignName: TextAlign.end,
-              color: Colors.lightGreen,
-              time: DateFormat('hh:mm a').format(singleMessage.time!.toDate()),
-              align: TextAlign.left,
-              nip: BubbleNip.rightTop,
-              boxAlign: CrossAxisAlignment.start,
-              crossAlign: CrossAxisAlignment.end,
-              text: singleMessage.content!,
-              content: _buildMessageContent(singleMessage),
-            );
-          } else {
-            return _messageLayout(
-              color: Colors.white,
-              nip: BubbleNip.leftTop,
-              name: "${singleMessage.senderName}",
-              alignName: TextAlign.end,
-              time: DateFormat('hh:mm a').format(singleMessage.time!.toDate()),
-              align: TextAlign.left,
-              boxAlign: CrossAxisAlignment.start,
-              crossAlign: CrossAxisAlignment.start,
-              text: singleMessage.content!,
-              content: _buildMessageContent(singleMessage),
-            );
-          }
-        },
+            if (singleMessage.senderId == widget.singleChatEntity.uid) {
+              return Container(
+                alignment: Alignment.centerRight,
+                child: _messageLayout(
+                  name: "Me",
+                  alignName: TextAlign.end,
+                  color: Colors.lightGreen,
+                  align: TextAlign.right,
+                  nip: BubbleNip.rightTop,
+                  boxAlign: CrossAxisAlignment.end,
+                  crossAlign: CrossAxisAlignment.end,
+                  text: singleMessage.content!,
+                  time: DateFormat('hh:mm a')
+                      .format(singleMessage.time!.toDate()),
+                  content: _buildMessageContent(singleMessage),
+                ),
+              );
+            } else {
+              return Container(
+                alignment: Alignment.centerLeft,
+                child: _messageLayout(
+                  color: Colors.white,
+                  nip: BubbleNip.leftTop,
+                  name: "${singleMessage.senderName}",
+                  alignName: TextAlign.start,
+                  time: DateFormat('hh:mm a')
+                      .format(singleMessage.time!.toDate()),
+                  align: TextAlign.left,
+                  boxAlign: CrossAxisAlignment.start,
+                  crossAlign: CrossAxisAlignment.start,
+                  text: singleMessage.content!,
+                  content: _buildMessageContent(singleMessage),
+                ),
+              );
+            }
+          },
+        ),
       ),
     );
   }
@@ -357,8 +430,8 @@ class _SingleChatPageState extends State<SingleChatPage> {
           alignment: Alignment.center,
           children: [
             Container(
-              width: 500,
-              height: 500,
+              width: 300,
+              height: 300,
               color: Colors.black,
             ),
             const Icon(Icons.play_arrow, color: Colors.white, size: 60),
