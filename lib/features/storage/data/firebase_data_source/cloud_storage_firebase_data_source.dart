@@ -7,4 +7,5 @@ abstract class CloudStorageFirebaseDataSource {
   Future<String> uploadVideo({required File file});
   Future<String> uploadAudio({required File file});
   Future<String> uploadGif({required File file});
+  Future<String> uploadPdf({required File file});
 }

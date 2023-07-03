@@ -6,6 +6,7 @@ import 'package:chat_app_1/features/group/domain/entities/single_chat_entity.dar
 import 'package:chat_app_1/features/group/domain/entities/text_message_entity.dart';
 import 'package:chat_app_1/features/group/presentation/cubits/chat/chat_cubit.dart';
 import 'package:chat_app_1/features/group/presentation/cubits/group/group_cubit.dart';
+import 'package:chat_app_1/features/group/presentation/pages/pdf_viewer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +34,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
   File? _selectedImage;
   File? _selectedVideo;
   File? _selectedAudio;
+  File? _selectedPdf;
 
   bool showMediaButtons = false;
   late SharedPreferences _preferences;
@@ -195,7 +197,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              width: showMediaButtons ? 135.0 * fem : 271.0 * fem,
+              width: showMediaButtons ? 90.0 * fem : 271.0 * fem,
               child: Container(
                 decoration: BoxDecoration(
                     color: Colors.white,
@@ -255,6 +257,11 @@ class _SingleChatPageState extends State<SingleChatPage> {
                             icon: const Icon(Icons.audiotrack),
                             color: Colors.green,
                           ),
+                          IconButton(
+                            onPressed: _pickPdf,
+                            icon: const Icon(Icons.picture_as_pdf),
+                            color: Colors.green,
+                          ),
                         ],
                       ),
                     )
@@ -280,6 +287,8 @@ class _SingleChatPageState extends State<SingleChatPage> {
                 } else if (_selectedAudio != null) {
                   // Enviar audio
                   _sendAudioMessage();
+                } else if (_selectedPdf != null) {
+                  _sendPdfMessage();
                 } else if (_messageController.text.isNotEmpty) {
                   // Enviar mensaje de texto
                   _sendTextMessage();
@@ -295,7 +304,8 @@ class _SingleChatPageState extends State<SingleChatPage> {
                   _messageController.text.isEmpty &&
                           _selectedAudio.toString().isEmpty &&
                           _selectedImage.toString().isEmpty &&
-                          _selectedVideo.toString().isEmpty
+                          _selectedVideo.toString().isEmpty &&
+                          _selectedPdf.toString().isEmpty
                       ? Icons.mic
                       : Icons.send,
                   color: Colors.white,
@@ -313,6 +323,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
       _selectedImage = null;
       _selectedVideo = null;
       _selectedAudio = null;
+      _selectedPdf = null;
       _messageController.clear();
     });
   }
@@ -404,6 +415,8 @@ class _SingleChatPageState extends State<SingleChatPage> {
       return _buildVideoPlayer(message.content!);
     } else if (message.content!.contains(".m4a")) {
       return _buildAudioPlayer(message.content!);
+    } else if (message.content!.contains(".pdf")) {
+      return _buildPdfViewer(message.content!);
     } else {
       return Text(message.content!);
     }
@@ -452,6 +465,20 @@ class _SingleChatPageState extends State<SingleChatPage> {
     );
   }
 
+  Widget _buildPdfViewer(String pdfUrl) {
+    return IconButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PdfViewer(pdfUrl),
+          ),
+        );
+      },
+      icon: const Icon(Icons.picture_as_pdf),
+    );
+  }
+
   Future<void> _pickImage() async {
     final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
 
@@ -481,6 +508,19 @@ class _SingleChatPageState extends State<SingleChatPage> {
     if (result != null) {
       setState(() {
         _selectedAudio = File(result.files.single.path!);
+      });
+    }
+  }
+
+  Future<void> _pickPdf() async {
+    FilePickerResult? pdf = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+
+    if (pdf != null) {
+      setState(() {
+        _selectedPdf = File(pdf.files.single.path!);
       });
     }
   }
@@ -562,6 +602,39 @@ class _SingleChatPageState extends State<SingleChatPage> {
                 senderName: widget.singleChatEntity.username,
                 senderId: widget.singleChatEntity.uid,
                 type: "AUDIO"),
+            channelId: widget.singleChatEntity.groupId)
+        .then((value) {
+      BlocProvider.of<GroupCubit>(context).updateGroup(
+          groupEntity: GroupEntity(
+        groupId: widget.singleChatEntity.groupId,
+        lastMessage: _messageController.text,
+        createAt: Timestamp.now(),
+      ));
+      _clear();
+    });
+  }
+
+  Future<void> _sendPdfMessage() async {
+    final ref = _storage
+        .ref()
+        .child('pdfs/${DateTime.now().millisecondsSinceEpoch}.pdf');
+    print('ref:${ref}');
+    final uploadTask = ref.putFile(_selectedPdf!);
+
+    await uploadTask.whenComplete(() => null);
+
+    final pdfUrl = await ref.getDownloadURL();
+
+    print('pdf cargado${ref}');
+
+    BlocProvider.of<ChatCubit>(context)
+        .sendTextMessage(
+            textMessageEntity: TextMessageEntity(
+                time: Timestamp.now(),
+                content: pdfUrl,
+                senderName: widget.singleChatEntity.username,
+                senderId: widget.singleChatEntity.uid,
+                type: "PDF"),
             channelId: widget.singleChatEntity.groupId)
         .then((value) {
       BlocProvider.of<GroupCubit>(context).updateGroup(

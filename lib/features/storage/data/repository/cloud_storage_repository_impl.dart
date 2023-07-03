@@ -27,4 +27,8 @@ class CloudStorageRepositoryImpl implements CloudStorageRepository {
   @override
   Future<String> uploadAudio({required File file}) async =>
       remoteDataSource.uploadAudio(file: file);
+
+  @override
+  Future<String> uploadPdf({required File file}) async =>
+      remoteDataSource.uploadPdf(file: file);
 }

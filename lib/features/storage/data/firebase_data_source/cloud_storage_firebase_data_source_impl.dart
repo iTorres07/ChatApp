@@ -95,4 +95,17 @@ class CloudStorageFirebaseDataSourceImpl
 
     return gifUrl;
   }
+
+  @override
+  Future<String> uploadPdf({required File file}) async {
+    final ref = storage.ref().child(
+          "pdfs/${DateTime.now().millisecondsSinceEpoch}${getNameOnly(file.path)}",
+        );
+
+    final uploadTask = ref.putFile(file);
+
+    final pdfUrl = (await uploadTask.whenComplete(() {})).ref.getDownloadURL();
+
+    return pdfUrl;
+  }
 }

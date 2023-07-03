@@ -6,4 +6,5 @@ abstract class CloudStorageRepository {
   Future<String> uploadImage({required File file});
   Future<String> uploadVideo({required File file});
   Future<String> uploadAudio({required File file});
+  Future<String> uploadPdf({required File file});
 }

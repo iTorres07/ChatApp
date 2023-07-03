@@ -57,6 +57,7 @@ dependencies:
   cached_network_image: ^3.2.3
   flutter_sound: ^9.2.13
   shared_preferences: ^2.1.2
+  syncfusion_flutter_pdfviewer: ^20.4.54
 
 dev_dependencies:
   flutter_test:
