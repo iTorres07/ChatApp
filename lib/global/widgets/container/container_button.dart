@@ -15,7 +15,7 @@ class ContainerButton extends StatelessWidget {
         height: 44,
         width: MediaQuery.of(context).size.width,
         decoration: BoxDecoration(
-          color: greenColor,
+          color: Colors.blue,
           borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
         child: Text(

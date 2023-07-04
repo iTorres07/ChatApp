@@ -82,7 +82,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 style: TextStyle(
                   fontSize: 35,
                   fontWeight: FontWeight.w700,
-                  color: greenColor,
+                  color: Colors.blue,
                 ),
               ),
             ),
@@ -166,7 +166,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: greenColor),
+                        color: Colors.blue),
                   ),
                 ),
               ],
@@ -187,7 +187,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 Text(
                   'Privacy Policy',
                   style: TextStyle(
-                      color: greenColor,
+                      color: Colors.blue,
                       fontSize: 12,
                       fontWeight: FontWeight.w700),
                 ),
@@ -206,7 +206,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 Text(
                   'terms ',
                   style: TextStyle(
-                      color: greenColor,
+                      color: Colors.blue,
                       fontSize: 12,
                       fontWeight: FontWeight.w700),
                 ),

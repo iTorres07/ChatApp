@@ -14,9 +14,13 @@ class SingleUserCubit extends Cubit<SingleUserState> {
 
   Future<void> getSingleUserProfile({required UserEntity user}) async {
     emit(SingleUserLoading());
+
     try {
       final streamResponse = getSingleUserUseCase.call(user);
+      print('User: ${user}');
+      print('Stream Response: ${streamResponse}');
       streamResponse.listen((user) {
+        print('HOLAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ${user}');
         emit(SingleUserLoaded(currentUser: user.first));
       });
     } on SocketException catch (_) {

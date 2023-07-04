@@ -39,11 +39,11 @@ class MyApp extends StatelessWidget {
         BlocProvider<ChatCubit>(create: (_) => di.sl<ChatCubit>()),
       ],
       child: MaterialApp(
-        title: 'Group Chat',
+        title: 'Group Chats',
         onGenerateRoute: OnGenerateRoute.route,
         debugShowCheckedModeBanner: false,
         initialRoute: "/",
-        theme: ThemeData(primarySwatch: Colors.green),
+        theme: ThemeData(primarySwatch: Colors.blue),
         routes: {
           "/": (context) {
             return BlocBuilder<AuthCubit, AuthState>(

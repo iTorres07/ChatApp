@@ -86,7 +86,7 @@ class _LoginPageState extends State<LoginPage> {
                 style: TextStyle(
                   fontSize: 35,
                   fontWeight: FontWeight.w700,
-                  color: greenColor,
+                  color: Colors.blue,
                 ),
               ),
             ),
@@ -128,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: greenColor,
+                    color: Colors.blue,
                   ),
                 ),
               ),
@@ -148,7 +148,7 @@ class _LoginPageState extends State<LoginPage> {
             Row(
               children: <Widget>[
                 Text(
-                  "don't have an Account",
+                  "Don't have an account?",
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 SizedBox(
@@ -164,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: greenColor),
+                        color: Colors.blue),
                   ),
                 ),
               ],

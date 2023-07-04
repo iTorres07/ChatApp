@@ -204,17 +204,17 @@ class _SingleChatPageState extends State<SingleChatPage> {
         IconButton(
           onPressed: _pickImage,
           icon: const Icon(Icons.image),
-          color: Colors.green,
+          color: Colors.blue,
         ),
         IconButton(
           onPressed: _pickVideo,
           icon: const Icon(Icons.videocam),
-          color: Colors.green,
+          color: Colors.blue,
         ),
         IconButton(
           onPressed: _pickAudio,
           icon: const Icon(Icons.audiotrack),
-          color: Colors.green,
+          color: Colors.blue,
         ),
         InkWell(
           onTap: () {
@@ -236,7 +236,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
             width: 45,
             height: 45,
             decoration: const BoxDecoration(
-                color: Colors.green,
+                color: Colors.blue,
                 borderRadius: BorderRadius.all(Radius.circular(50))),
             child: Icon(
               _messageController.text.isEmpty &&
@@ -284,7 +284,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
             return _messageLayout(
               name: "Me",
               alignName: TextAlign.end,
-              color: Colors.lightGreen,
+              color: Colors.lightBlue,
               time: DateFormat('hh:mm a').format(singleMessage.time!.toDate()),
               align: TextAlign.left,
               nip: BubbleNip.rightTop,

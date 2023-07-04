@@ -42,7 +42,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.w700,
-                      color: greenColor),
+                      color: Colors.blue),
                 ),
               ),
               SizedBox(
@@ -97,7 +97,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: greenColor),
+                          color: Colors.blue),
                     ),
                   ),
                 ],

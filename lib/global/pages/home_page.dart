@@ -25,7 +25,7 @@ class _HomePageState extends State<HomePage> {
   List<Widget> get pages =>
       [GroupPage(uid: widget.uid), AllUsersPage(), ProfilePage()];
 
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
 
   @override
   void initState() {
@@ -48,7 +48,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0.0,
-        title: Text("Group Chat"),
+        title: Text("Group Chats"),
         actions: [
           Icon(Icons.search),
           SizedBox(

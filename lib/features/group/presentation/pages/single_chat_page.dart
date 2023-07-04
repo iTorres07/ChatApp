@@ -277,7 +277,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
             )),
             IconButton(
               icon: const Icon(Icons.attach_file),
-              color: Colors.green,
+              color: Colors.blue,
               iconSize: 30,
               onPressed: () {
                 setState(() {
@@ -309,7 +309,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
                 width: 45,
                 height: 45,
                 decoration: const BoxDecoration(
-                    color: Colors.green,
+                    color: Colors.blue,
                     borderRadius: BorderRadius.all(Radius.circular(50))),
                 child: sending
                     ? Transform.scale(
@@ -379,7 +379,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
                 child: _messageLayout(
                   name: "",
                   alignName: TextAlign.end,
-                  color: Colors.lightGreen,
+                  color: Colors.lightBlue,
                   align: TextAlign.right,
                   nip: BubbleNip.rightTop,
                   boxAlign: CrossAxisAlignment.end,
@@ -424,7 +424,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
         placeHolderBoxFit: BoxFit.cover,
         networkImageBoxFit: BoxFit.cover,
         imageUrl: imageUrl,
-        progressIndicatorBuilder: Center(
+        progressIndicatorBuilder: const Center(
           child: CircularProgressIndicator(),
         ),
         placeHolder: "assets/profile_default.png",
@@ -652,7 +652,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
     final ref = _storage
         .ref()
         .child('pdfs/${DateTime.now().millisecondsSinceEpoch}.pdf');
-    print('ref:${ref}');
+
     final uploadTask = ref.putFile(_selectedPdf!);
 
     await uploadTask.whenComplete(() => null);

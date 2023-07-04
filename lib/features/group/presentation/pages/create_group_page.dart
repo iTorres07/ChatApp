@@ -93,7 +93,9 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
             Text(
               'Add Group Image',
               style: TextStyle(
-                  color: greenColor, fontSize: 16, fontWeight: FontWeight.w400),
+                  color: Colors.blue,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400),
             ),
             const SizedBox(
               height: 20,

@@ -107,7 +107,7 @@ class _ProfilePageState extends State<ProfilePage> {
           Text(
             'Remove profile photo',
             style: TextStyle(
-                color: greenColor, fontSize: 16, fontWeight: FontWeight.w400),
+                color: Colors.blue, fontSize: 16, fontWeight: FontWeight.w400),
           ),
           SizedBox(
             height: 14,

@@ -105,11 +105,31 @@ class UserFirebaseDataSourceImpl implements UserFirebaseDataSource {
 
   @override
   Future<void> signUp(UserEntity user) async {
-    await auth
-        .createUserWithEmailAndPassword(
-            email: user.email!, password: user.password!)
-        .then((value) {
-      getCreateCurrentUser(user);
-    });
+    try {
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: user.email!,
+        password: user.password!,
+      );
+
+      // Obtener la referencia a la colección "users"
+      CollectionReference usersCollection =
+          FirebaseFirestore.instance.collection('users');
+
+      // Crear un nuevo documento con el ID del usuario recién creado
+      await usersCollection.doc(userCredential.user!.uid).set({
+        'name': user.name,
+        'email': user.email,
+        'profileUrl': '',
+        'status': '',
+        'uid': userCredential.user!.uid
+      });
+
+      // El documento se creó correctamente
+      print('Usuario creado en Firestore');
+    } catch (e) {
+      // Hubo un error al crear el usuario o el documento
+      print('Error: $e');
+    }
   }
 }
