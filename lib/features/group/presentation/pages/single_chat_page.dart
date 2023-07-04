@@ -37,6 +37,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
   File? _selectedPdf;
 
   bool showMediaButtons = false;
+  bool sending = false;
   late SharedPreferences _preferences;
   VideoPlayerController? _videoPlayerController;
 
@@ -155,21 +156,28 @@ class _SingleChatPageState extends State<SingleChatPage> {
                     ),
                   ],
                 ),
-                child: Column(
-                  crossAxisAlignment: crossAlign,
-                  children: [
-                    Text(
-                      name,
-                      textAlign: alignName,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                child: name == ""
+                    ? Column(
+                        crossAxisAlignment: crossAlign,
+                        children: [
+                          content,
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: crossAlign,
+                        children: [
+                          Text(
+                            name,
+                            textAlign: alignName,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          content,
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    content,
-                  ],
-                ),
               ),
             ],
           ),
@@ -236,40 +244,41 @@ class _SingleChatPageState extends State<SingleChatPage> {
               ),
             ),
             Expanded(
-              child: showMediaButtons
-                  ? AnimatedOpacity(
-                      duration: const Duration(milliseconds: 300),
-                      opacity: showMediaButtons ? 1.0 : 0.0,
-                      child: Row(
-                        children: [
-                          IconButton(
-                            onPressed: _pickImage,
-                            icon: const Icon(Icons.image),
-                            color: Colors.green,
-                          ),
-                          IconButton(
-                            onPressed: _pickVideo,
-                            icon: const Icon(Icons.videocam),
-                            color: Colors.green,
-                          ),
-                          IconButton(
-                            onPressed: _pickAudio,
-                            icon: const Icon(Icons.audiotrack),
-                            color: Colors.green,
-                          ),
-                          IconButton(
-                            onPressed: _pickPdf,
-                            icon: const Icon(Icons.picture_as_pdf),
-                            color: Colors.green,
-                          ),
-                        ],
-                      ),
-                    )
-                  : SizedBox(),
-            ),
+                child: AnimatedOpacity(
+              duration: Duration(milliseconds: 500),
+              opacity: showMediaButtons ? 1.0 : 0.0,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.image),
+                      color: Colors.black87,
+                    ),
+                    IconButton(
+                      onPressed: _pickVideo,
+                      icon: const Icon(Icons.videocam),
+                      color: Colors.black87,
+                    ),
+                    IconButton(
+                      onPressed: _pickAudio,
+                      icon: const Icon(Icons.audiotrack),
+                      color: Colors.black87,
+                    ),
+                    IconButton(
+                      onPressed: _pickPdf,
+                      icon: const Icon(Icons.picture_as_pdf),
+                      color: Colors.black87,
+                    ),
+                  ],
+                ),
+              ),
+            )),
             IconButton(
               icon: const Icon(Icons.attach_file),
               color: Colors.green,
+              iconSize: 30,
               onPressed: () {
                 setState(() {
                   showMediaButtons = !showMediaButtons;
@@ -292,6 +301,8 @@ class _SingleChatPageState extends State<SingleChatPage> {
                 } else if (_messageController.text.isNotEmpty) {
                   // Enviar mensaje de texto
                   _sendTextMessage();
+                } else if (_messageController.text.isEmpty) {
+                  _pickAudio();
                 }
               },
               child: Container(
@@ -300,18 +311,25 @@ class _SingleChatPageState extends State<SingleChatPage> {
                 decoration: const BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.all(Radius.circular(50))),
-                child: Icon(
-                  _messageController.text.isEmpty &&
-                          _selectedAudio.toString().isEmpty &&
-                          _selectedImage.toString().isEmpty &&
-                          _selectedVideo.toString().isEmpty &&
-                          _selectedPdf.toString().isEmpty
-                      ? Icons.mic
-                      : Icons.send,
-                  color: Colors.white,
-                ),
+                child: sending
+                    ? Transform.scale(
+                        scale: 0.5,
+                        child: const CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      )
+                    : Icon(
+                        _messageController.text.isEmpty ||
+                                _selectedAudio.toString().isEmpty ||
+                                _selectedImage.toString().isEmpty ||
+                                _selectedVideo.toString().isEmpty ||
+                                _selectedPdf.toString().isEmpty
+                            ? Icons.mic
+                            : Icons.send,
+                        color: Colors.white,
+                      ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -359,7 +377,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
               return Container(
                 alignment: Alignment.centerRight,
                 child: _messageLayout(
-                  name: "Me",
+                  name: "",
                   alignName: TextAlign.end,
                   color: Colors.lightGreen,
                   align: TextAlign.right,
@@ -401,7 +419,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
         message.content!.contains(".jpg")) {
       var imageUrl = message.content;
       return NetworkImageWidget(
-        borderRadiusImageFile: 50,
+        borderRadiusImageFile: 10,
         imageFileBoxFit: BoxFit.cover,
         placeHolderBoxFit: BoxFit.cover,
         networkImageBoxFit: BoxFit.cover,
@@ -462,6 +480,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
         audioPlayer.play(UrlSource(audioUrl));
       },
       icon: const Icon(Icons.play_arrow),
+      iconSize: 30,
     );
   }
 
@@ -476,6 +495,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
         );
       },
       icon: const Icon(Icons.picture_as_pdf),
+      iconSize: 30,
     );
   }
 
@@ -485,7 +505,9 @@ class _SingleChatPageState extends State<SingleChatPage> {
     if (pickedImage != null) {
       setState(() {
         _selectedImage = File(pickedImage.path);
+        showMediaButtons = !showMediaButtons;
       });
+      _sendImageMessage();
     }
   }
 
@@ -497,7 +519,9 @@ class _SingleChatPageState extends State<SingleChatPage> {
         _selectedVideo = File(pickedVideo.path);
         _videoPlayerController = VideoPlayerController.file(_selectedVideo!)
           ..initialize();
+        showMediaButtons = !showMediaButtons;
       });
+      _sendVideoMessage();
     }
   }
 
@@ -508,7 +532,9 @@ class _SingleChatPageState extends State<SingleChatPage> {
     if (result != null) {
       setState(() {
         _selectedAudio = File(result.files.single.path!);
+        showMediaButtons = !showMediaButtons;
       });
+      _sendAudioMessage();
     }
   }
 
@@ -521,11 +547,14 @@ class _SingleChatPageState extends State<SingleChatPage> {
     if (pdf != null) {
       setState(() {
         _selectedPdf = File(pdf.files.single.path!);
+        showMediaButtons = !showMediaButtons;
       });
+      _sendPdfMessage();
     }
   }
 
   Future<void> _sendImageMessage() async {
+    sending = true;
     if (_selectedImage != null) {
       final ref = _storage
           .ref()
@@ -555,6 +584,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
   }
 
   Future<void> _sendVideoMessage() async {
+    sending = true;
     final ref = _storage
         .ref()
         .child('videos/${DateTime.now().millisecondsSinceEpoch}.mp4');
@@ -585,6 +615,8 @@ class _SingleChatPageState extends State<SingleChatPage> {
   }
 
   Future<void> _sendAudioMessage() async {
+    sending = true;
+
     final ref = _storage
         .ref()
         .child('audios/${DateTime.now().millisecondsSinceEpoch}.m4a');
@@ -615,6 +647,8 @@ class _SingleChatPageState extends State<SingleChatPage> {
   }
 
   Future<void> _sendPdfMessage() async {
+    sending = true;
+
     final ref = _storage
         .ref()
         .child('pdfs/${DateTime.now().millisecondsSinceEpoch}.pdf');
@@ -624,8 +658,6 @@ class _SingleChatPageState extends State<SingleChatPage> {
     await uploadTask.whenComplete(() => null);
 
     final pdfUrl = await ref.getDownloadURL();
-
-    print('pdf cargado${ref}');
 
     BlocProvider.of<ChatCubit>(context)
         .sendTextMessage(
@@ -644,6 +676,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
         createAt: Timestamp.now(),
       ));
       _clear();
+      sending = false;
     });
   }
 
