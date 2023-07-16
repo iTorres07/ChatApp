@@ -9,20 +9,27 @@ import 'package:chat_app_1/features/group/presentation/pages/image_viewer.dart';
 import 'package:chat_app_1/features/group/presentation/pages/location_page.dart';
 import 'package:chat_app_1/features/group/presentation/pages/pdf_viewer.dart';
 import 'package:chat_app_1/features/group/presentation/pages/video_viewer.dart';
+import 'package:chat_app_1/global/theme/style.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
+
 import 'package:network_image/network_image.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+
+// ignore: constant_identifier_names
+const MAPBOX_ACCESS_TOKEN =
+    'pk.eyJ1IjoiZW1pdG9ycmVzNyIsImEiOiJjbGs0cHRhNWUwanRtM2Z0ankzeHpmYzNqIn0.zEXm5ezAjAChGtywsygrqg';
 
 class SingleChatPage extends StatefulWidget {
   final SingleChatEntity singleChatEntity;
@@ -36,10 +43,12 @@ class SingleChatPage extends StatefulWidget {
 
 class _SingleChatPageState extends State<SingleChatPage> {
   String? myPosition;
+  String? newPosition;
   File? _selectedImage;
   File? _selectedVideo;
   File? _selectedAudio;
   File? _selectedPdf;
+  LatLng? _selectedPoint;
 
   bool showMediaButtons = false;
   bool sending = false;
@@ -112,6 +121,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
     _saveScrollPosition();
     _scrollController.dispose();
     _messageController.dispose();
+    myPosition = null;
     super.dispose();
   }
 
@@ -237,7 +247,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                width: showMediaButtons ? 70.0 * fem : 271.0 * fem,
+                width: showMediaButtons ? 60.0 * fem : 271.0 * fem,
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -414,20 +424,45 @@ class _SingleChatPageState extends State<SingleChatPage> {
             final singleMessage = messages[index];
 
             if (singleMessage.senderId == widget.singleChatEntity.uid) {
-              return Container(
-                alignment: Alignment.centerRight,
-                child: _messageLayout(
-                  name: "",
-                  alignName: TextAlign.end,
-                  color: Colors.lightBlue,
-                  align: TextAlign.right,
-                  nip: BubbleNip.rightTop,
-                  boxAlign: CrossAxisAlignment.end,
-                  crossAlign: CrossAxisAlignment.end,
-                  text: singleMessage.content!,
-                  time: DateFormat('hh:mm a')
-                      .format(singleMessage.time!.toDate()),
-                  content: _buildMessageContent(singleMessage),
+              return GestureDetector(
+                onLongPress: () {
+                  showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          content: const Text('¿Que desea realizar?'),
+                          actions: [
+                            TextButton(
+                              child: const Text('Cerrar'),
+                              onPressed: () async {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            TextButton(
+                              child: const Text('Eliminar'),
+                              onPressed: () async {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        );
+                      });
+                },
+                child: Container(
+                  alignment: Alignment.centerRight,
+                  child: _messageLayout(
+                    name: "",
+                    alignName: TextAlign.end,
+                    color: Colors.lightBlue,
+                    align: TextAlign.right,
+                    nip: BubbleNip.rightTop,
+                    boxAlign: CrossAxisAlignment.end,
+                    crossAlign: CrossAxisAlignment.end,
+                    text: singleMessage.content!,
+                    time: DateFormat('hh:mm a')
+                        .format(singleMessage.time!.toDate()),
+                    content: _buildMessageContent(singleMessage),
+                  ),
                 ),
               );
             } else {
@@ -629,10 +664,155 @@ class _SingleChatPageState extends State<SingleChatPage> {
   Future<void> _pickLocation() async {
     myPosition = await getCurrentLocation();
 
-    setState(() {
-      showMediaButtons = !showMediaButtons;
-    });
-    _sendLocationMessage();
+    // ignore: use_build_context_synchronously
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Ubicación'),
+          content: const Text('¿Que quieres envíar?'),
+          actions: [
+            TextButton(
+              child: const Text('Enviar mi ubicación actual'),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                setState(() {
+                  showMediaButtons = !showMediaButtons;
+                });
+                _sendLocationMessage();
+              },
+            ),
+            TextButton(
+              child: const Text('Seleccionar una ubicación'),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                List<String> coordinates = myPosition!.split(',');
+                double latitude = double.parse(coordinates[0]);
+                double longitude = double.parse(coordinates[1]);
+                _selectedPoint = LatLng(latitude, longitude);
+                showModalBottomSheet<void>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Column(
+                      children: [
+                        Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  GestureDetector(
+                                    child: Icon(
+                                      Icons.close,
+                                      size: 30.0,
+                                      color: greenColor,
+                                    ),
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                  const Text(
+                                    'Seleccione la ubicación',
+                                    style: TextStyle(fontSize: 18.0),
+                                  ),
+                                  GestureDetector(
+                                    child: Icon(
+                                      Icons.send,
+                                      size: 30.0,
+                                      color: greenColor,
+                                    ),
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      setState(() {
+                                        newPosition =
+                                            '${_selectedPoint!.latitude},${_selectedPoint!.longitude}';
+                                        showMediaButtons = !showMediaButtons;
+                                      });
+                                      _sendLocationMessage();
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            StatefulBuilder(
+                              builder:
+                                  (BuildContext context, StateSetter setState) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: SizedBox(
+                                    height: 300,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      child: SizedBox(
+                                        height: 600,
+                                        child: FlutterMap(
+                                          options: MapOptions(
+                                            center: _selectedPoint,
+                                            minZoom: 5,
+                                            maxZoom: 25,
+                                            zoom: 12,
+                                            enableScrollWheel: true,
+                                            onTap: (tapPosition, point) {
+                                              setState(() {
+                                                _selectedPoint = LatLng(
+                                                  point.latitude,
+                                                  point.longitude,
+                                                );
+                                              });
+                                            },
+                                          ),
+                                          nonRotatedChildren: [
+                                            TileLayer(
+                                              urlTemplate:
+                                                  'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}',
+                                              additionalOptions: const {
+                                                'accessToken':
+                                                    MAPBOX_ACCESS_TOKEN,
+                                                'id': 'mapbox/streets-v12'
+                                              },
+                                            ),
+                                            MarkerLayer(
+                                              markers: [
+                                                Marker(
+                                                  point: _selectedPoint!,
+                                                  builder: (context) {
+                                                    return const Icon(
+                                                      Icons.place,
+                                                      color: Colors.red,
+                                                      size: 40,
+                                                    );
+                                                  },
+                                                )
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _sendImageMessage() async {
@@ -767,9 +947,13 @@ class _SingleChatPageState extends State<SingleChatPage> {
 
   Future<void> _sendLocationMessage() async {
     sending = true;
+    String? messageContent;
 
-    final messageContent = myPosition;
-    print('POSITION TO STRING: ${messageContent}');
+    if (newPosition != null) {
+      messageContent = newPosition;
+    } else {
+      messageContent = myPosition;
+    }
 
     BlocProvider.of<ChatCubit>(context)
         .sendTextMessage(
