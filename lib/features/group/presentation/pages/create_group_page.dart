@@ -4,7 +4,6 @@ import 'package:chat_app_1/features/group/domain/entities/group_entity.dart';
 import 'package:chat_app_1/features/group/presentation/cubits/group/group_cubit.dart';
 import 'package:chat_app_1/features/storage/domain/usecases/upload_group_image_usecase.dart';
 import 'package:chat_app_1/global/common/common.dart';
-import 'package:chat_app_1/global/theme/style.dart';
 import 'package:chat_app_1/global/widgets/container/container_button.dart';
 import 'package:chat_app_1/global/widgets/custom_text_field/text_field_container.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

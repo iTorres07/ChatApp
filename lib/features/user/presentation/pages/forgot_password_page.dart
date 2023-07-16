@@ -2,7 +2,6 @@ import 'package:chat_app_1/features/user/presentation/cubit/credential/credentia
 import 'package:chat_app_1/global/common/common.dart';
 import 'package:chat_app_1/global/const/app_const.dart';
 import 'package:chat_app_1/global/const/page_const.dart';
-import 'package:chat_app_1/global/theme/style.dart';
 import 'package:chat_app_1/global/widgets/container/container_button.dart';
 import 'package:chat_app_1/global/widgets/custom_text_field/text_field_container.dart';
 import 'package:flutter/material.dart';

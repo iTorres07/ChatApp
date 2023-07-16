@@ -1,4 +1,3 @@
-import 'package:chat_app_1/global/theme/style.dart';
 import 'package:flutter/material.dart';
 
 class ContainerButton extends StatelessWidget {

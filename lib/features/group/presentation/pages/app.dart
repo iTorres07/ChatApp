@@ -191,7 +191,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
                         maxLines: null,
                         decoration: const InputDecoration(
                             border: InputBorder.none,
-                            hintText: "Type a message"),
+                            hintText: "Type a messagesss"),
                       ),
                     ),
                   ),
@@ -317,7 +317,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
         message.content!.contains(".jpg")) {
       var imageUrl = message.content;
       return NetworkImageWidget(
-        borderRadiusImageFile: 50,
+        borderRadiusImageFile: 10,
         imageFileBoxFit: BoxFit.cover,
         placeHolderBoxFit: BoxFit.cover,
         networkImageBoxFit: BoxFit.cover,
@@ -373,7 +373,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
 
     return IconButton(
       onPressed: () {
-        audioPlayer.play(UrlSource(audioUrl));
+        audioPlayer.play(audioUrl);
       },
       icon: const Icon(Icons.play_arrow),
     );
@@ -427,7 +427,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
                   content: imageUrl,
                   senderName: widget.singleChatEntity.username,
                   senderId: widget.singleChatEntity.uid,
-                  type: "TEXT"),
+                  type: "IMAGE"),
               channelId: widget.singleChatEntity.groupId)
           .then((value) {
         BlocProvider.of<GroupCubit>(context).updateGroup(
@@ -503,24 +503,27 @@ class _SingleChatPageState extends State<SingleChatPage> {
 
   Future<void> _sendTextMessage() async {
     final messageContent = _messageController.text;
-
-    BlocProvider.of<ChatCubit>(context)
-        .sendTextMessage(
-            textMessageEntity: TextMessageEntity(
-                time: Timestamp.now(),
-                content: messageContent,
-                senderName: widget.singleChatEntity.username,
-                senderId: widget.singleChatEntity.uid,
-                type: "TEXT"),
-            channelId: widget.singleChatEntity.groupId)
-        .then((value) {
-      BlocProvider.of<GroupCubit>(context).updateGroup(
-          groupEntity: GroupEntity(
-        groupId: widget.singleChatEntity.groupId,
-        lastMessage: _messageController.text,
-        createAt: Timestamp.now(),
-      ));
-      _clear();
-    });
+    if (_selectedImage == null &&
+        _selectedVideo == null &&
+        _selectedAudio == null) {
+      BlocProvider.of<ChatCubit>(context)
+          .sendTextMessage(
+              textMessageEntity: TextMessageEntity(
+                  time: Timestamp.now(),
+                  content: messageContent,
+                  senderName: widget.singleChatEntity.username,
+                  senderId: widget.singleChatEntity.uid,
+                  type: "TEXT"),
+              channelId: widget.singleChatEntity.groupId)
+          .then((value) {
+        BlocProvider.of<GroupCubit>(context).updateGroup(
+            groupEntity: GroupEntity(
+          groupId: widget.singleChatEntity.groupId,
+          lastMessage: _messageController.text,
+          createAt: Timestamp.now(),
+        ));
+        _clear();
+      });
+    }
   }
 }

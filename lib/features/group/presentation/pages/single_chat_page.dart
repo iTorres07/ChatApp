@@ -1,19 +1,23 @@
 import 'dart:async';
-
 import 'package:bubble/bubble.dart';
 import 'package:chat_app_1/features/group/domain/entities/group_entity.dart';
 import 'package:chat_app_1/features/group/domain/entities/single_chat_entity.dart';
 import 'package:chat_app_1/features/group/domain/entities/text_message_entity.dart';
 import 'package:chat_app_1/features/group/presentation/cubits/chat/chat_cubit.dart';
 import 'package:chat_app_1/features/group/presentation/cubits/group/group_cubit.dart';
+import 'package:chat_app_1/features/group/presentation/pages/image_viewer.dart';
+import 'package:chat_app_1/features/group/presentation/pages/location_page.dart';
 import 'package:chat_app_1/features/group/presentation/pages/pdf_viewer.dart';
+import 'package:chat_app_1/features/group/presentation/pages/video_viewer.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:network_image/network_image.dart';
 import 'package:video_player/video_player.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -31,6 +35,7 @@ class SingleChatPage extends StatefulWidget {
 }
 
 class _SingleChatPageState extends State<SingleChatPage> {
+  String? myPosition;
   File? _selectedImage;
   File? _selectedVideo;
   File? _selectedAudio;
@@ -38,6 +43,8 @@ class _SingleChatPageState extends State<SingleChatPage> {
 
   bool showMediaButtons = false;
   bool sending = false;
+  bool playing = false;
+  bool ignoreStateChanges = false;
   late SharedPreferences _preferences;
   VideoPlayerController? _videoPlayerController;
 
@@ -51,7 +58,12 @@ class _SingleChatPageState extends State<SingleChatPage> {
   void initState() {
     _initSharedPreferences();
     _scrollController = ScrollController();
-    _scrollController.addListener(_handleScroll);
+    _scrollController.addListener(() {
+      if (!ignoreStateChanges) {
+        _handleScroll;
+      }
+    });
+
     BlocProvider.of<ChatCubit>(context)
         .getMessages(channelId: widget.singleChatEntity.groupId);
     _messageController.addListener(() {
@@ -75,6 +87,24 @@ class _SingleChatPageState extends State<SingleChatPage> {
 
   void _handleScroll() {
     _saveScrollPosition();
+  }
+
+  Future<Position> determinePosition() async {
+    LocationPermission permission;
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('error');
+      }
+    }
+    return await Geolocator.getCurrentPosition();
+  }
+
+  getCurrentLocation() async {
+    Position position = await determinePosition();
+    myPosition = '${position.latitude}, ${position.longitude}';
+    return myPosition;
   }
 
   @override
@@ -198,16 +228,18 @@ class _SingleChatPageState extends State<SingleChatPage> {
     double baseWidth = 375;
     double fem = MediaQuery.of(context).size.width / baseWidth;
     return Padding(
-      padding: const EdgeInsets.all(5.0),
-      child: Align(
-        alignment: Alignment.bottomCenter,
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: showMediaButtons ? 90.0 * fem : 271.0 * fem,
-              child: Container(
-                decoration: BoxDecoration(
+      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10.0),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: showMediaButtons ? 70.0 * fem : 271.0 * fem,
+                child: Container(
+                  decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: const BorderRadius.all(Radius.circular(80)),
                     boxShadow: [
@@ -217,120 +249,128 @@ class _SingleChatPageState extends State<SingleChatPage> {
                         spreadRadius: 1,
                         blurRadius: 1,
                       )
-                    ]),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        constraints: const BoxConstraints(maxHeight: 60),
-                        child: Scrollbar(
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20.0),
-                            child: TextField(
-                              style: const TextStyle(fontSize: 14),
-                              controller: _messageController,
-                              maxLines: null,
-                              decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  hintText: "Type a message"),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          constraints: const BoxConstraints(maxHeight: 60),
+                          child: Scrollbar(
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20.0),
+                              child: TextField(
+                                style: const TextStyle(fontSize: 14),
+                                controller: _messageController,
+                                maxLines: null,
+                                decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    hintText: "Type a message"),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            Expanded(
+              Expanded(
                 child: AnimatedOpacity(
-              duration: Duration(milliseconds: 500),
-              opacity: showMediaButtons ? 1.0 : 0.0,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: _pickImage,
-                      icon: const Icon(Icons.image),
-                      color: Colors.black87,
+                  duration: const Duration(milliseconds: 500),
+                  opacity: showMediaButtons ? 1.0 : 0.0,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.image),
+                          color: Colors.black87,
+                        ),
+                        IconButton(
+                          onPressed: _pickVideo,
+                          icon: const Icon(Icons.videocam),
+                          color: Colors.black87,
+                        ),
+                        IconButton(
+                          onPressed: _pickAudio,
+                          icon: const Icon(Icons.audiotrack),
+                          color: Colors.black87,
+                        ),
+                        IconButton(
+                          onPressed: _pickPdf,
+                          icon: const Icon(Icons.picture_as_pdf),
+                          color: Colors.black87,
+                        ),
+                        IconButton(
+                          onPressed: _pickLocation,
+                          icon: const Icon(Icons.place),
+                          color: Colors.black87,
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      onPressed: _pickVideo,
-                      icon: const Icon(Icons.videocam),
-                      color: Colors.black87,
-                    ),
-                    IconButton(
-                      onPressed: _pickAudio,
-                      icon: const Icon(Icons.audiotrack),
-                      color: Colors.black87,
-                    ),
-                    IconButton(
-                      onPressed: _pickPdf,
-                      icon: const Icon(Icons.picture_as_pdf),
-                      color: Colors.black87,
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            )),
-            IconButton(
-              icon: const Icon(Icons.attach_file),
-              color: Colors.blue,
-              iconSize: 30,
-              onPressed: () {
-                setState(() {
-                  showMediaButtons = !showMediaButtons;
-                });
-              },
-            ),
-            InkWell(
-              onTap: () {
-                if (_selectedImage != null) {
-                  // Enviar imagen
-                  _sendImageMessage();
-                } else if (_selectedVideo != null) {
-                  // Enviar video
-                  _sendVideoMessage();
-                } else if (_selectedAudio != null) {
-                  // Enviar audio
-                  _sendAudioMessage();
-                } else if (_selectedPdf != null) {
-                  _sendPdfMessage();
-                } else if (_messageController.text.isNotEmpty) {
-                  // Enviar mensaje de texto
-                  _sendTextMessage();
-                } else if (_messageController.text.isEmpty) {
-                  _pickAudio();
-                }
-              },
-              child: Container(
-                width: 45,
-                height: 45,
-                decoration: const BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.all(Radius.circular(50))),
-                child: sending
-                    ? Transform.scale(
-                        scale: 0.5,
-                        child: const CircularProgressIndicator(
+              IconButton(
+                icon: const Icon(Icons.attach_file),
+                color: Colors.blue,
+                iconSize: 30,
+                onPressed: () {
+                  setState(() {
+                    showMediaButtons = !showMediaButtons;
+                  });
+                },
+              ),
+              InkWell(
+                onTap: () {
+                  if (_selectedImage != null) {
+                    // Enviar imagen
+                    _sendImageMessage();
+                  } else if (_selectedVideo != null) {
+                    // Enviar video
+                    _sendVideoMessage();
+                  } else if (_selectedAudio != null) {
+                    // Enviar audio
+                    _sendAudioMessage();
+                  } else if (_selectedPdf != null) {
+                    _sendPdfMessage();
+                  } else if (_messageController.text.isNotEmpty) {
+                    // Enviar mensaje de texto
+                    _sendTextMessage();
+                  } else if (_messageController.text.isEmpty) {
+                    _pickAudio();
+                  }
+                },
+                child: Container(
+                  width: 45,
+                  height: 45,
+                  decoration: const BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.all(Radius.circular(50))),
+                  child: sending
+                      ? Transform.scale(
+                          scale: 0.5,
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                          ),
+                        )
+                      : Icon(
+                          _messageController.text.isEmpty ||
+                                  _selectedAudio.toString().isEmpty ||
+                                  _selectedImage.toString().isEmpty ||
+                                  _selectedVideo.toString().isEmpty ||
+                                  _selectedPdf.toString().isEmpty
+                              ? Icons.mic
+                              : Icons.send,
                           color: Colors.white,
                         ),
-                      )
-                    : Icon(
-                        _messageController.text.isEmpty ||
-                                _selectedAudio.toString().isEmpty ||
-                                _selectedImage.toString().isEmpty ||
-                                _selectedVideo.toString().isEmpty ||
-                                _selectedPdf.toString().isEmpty
-                            ? Icons.mic
-                            : Icons.send,
-                        color: Colors.white,
-                      ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -365,7 +405,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 55.0),
+        padding: const EdgeInsets.only(bottom: 60.0),
         child: ListView.builder(
           itemCount: messages.length,
           controller: _scrollController,
@@ -415,19 +455,28 @@ class _SingleChatPageState extends State<SingleChatPage> {
   }
 
   Widget _buildMessageContent(TextMessageEntity message) {
-    if (message.content!.contains(".png") ||
-        message.content!.contains(".jpg")) {
+    if (message.type == 'IMAGE') {
       var imageUrl = message.content;
-      return NetworkImageWidget(
-        borderRadiusImageFile: 10,
-        imageFileBoxFit: BoxFit.cover,
-        placeHolderBoxFit: BoxFit.cover,
-        networkImageBoxFit: BoxFit.cover,
-        imageUrl: imageUrl,
-        progressIndicatorBuilder: const Center(
-          child: CircularProgressIndicator(),
+      return GestureDetector(
+        child: NetworkImageWidget(
+          borderRadiusNetworkImage: 10,
+          imageFileBoxFit: BoxFit.cover,
+          placeHolderBoxFit: BoxFit.cover,
+          networkImageBoxFit: BoxFit.cover,
+          imageUrl: imageUrl,
+          progressIndicatorBuilder: const Center(
+            child: CircularProgressIndicator(),
+          ),
+          placeHolder: "assets/profile_default.png",
         ),
-        placeHolder: "assets/profile_default.png",
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ImageViewer(imageUrl!),
+            ),
+          );
+        },
       );
     } else if (message.content!.contains(".mp4")) {
       return _buildVideoPlayer(message.content!);
@@ -435,41 +484,42 @@ class _SingleChatPageState extends State<SingleChatPage> {
       return _buildAudioPlayer(message.content!);
     } else if (message.content!.contains(".pdf")) {
       return _buildPdfViewer(message.content!);
+    } else if (message.type == 'LOCATION') {
+      return _buildLocationViewer(message.content!);
     } else {
       return Text(message.content!);
     }
   }
 
   Widget _buildVideoPlayer(String videoUrl) {
-    if (_videoPlayerController != null &&
-        _videoPlayerController!.value.isInitialized) {
-      return AspectRatio(
-        aspectRatio: _videoPlayerController!.value.aspectRatio,
-        child: VideoPlayer(_videoPlayerController!),
-      );
-    } else {
-      return GestureDetector(
-        onTap: () {
-          _videoPlayerController = VideoPlayerController.network(videoUrl)
-            ..initialize().then((_) {
-              setState(() {
-                _videoPlayerController!.play();
-              });
-            });
-        },
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
+    return GestureDetector(
+      onTap: () {
+        // ignore: deprecated_member_use
+        _videoPlayerController = VideoPlayerController.network(videoUrl)
+          ..initialize().then((_) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VideoViewer(_videoPlayerController!),
+              ),
+            );
+          });
+      },
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10.0),
+            child: Container(
               width: 300,
               height: 300,
               color: Colors.black,
             ),
-            const Icon(Icons.play_arrow, color: Colors.white, size: 60),
-          ],
-        ),
-      );
-    }
+          ),
+          const Icon(Icons.play_arrow, color: Colors.white, size: 60),
+        ],
+      ),
+    );
   }
 
   Widget _buildAudioPlayer(String audioUrl) {
@@ -477,9 +527,15 @@ class _SingleChatPageState extends State<SingleChatPage> {
 
     return IconButton(
       onPressed: () {
-        audioPlayer.play(UrlSource(audioUrl));
+        playing = !playing;
+
+        if (playing) {
+          audioPlayer.play(audioUrl);
+        } else {
+          audioPlayer.pause();
+        }
       },
-      icon: const Icon(Icons.play_arrow),
+      icon: playing ? const Icon(Icons.pause) : const Icon(Icons.play_arrow),
       iconSize: 30,
     );
   }
@@ -495,6 +551,23 @@ class _SingleChatPageState extends State<SingleChatPage> {
         );
       },
       icon: const Icon(Icons.picture_as_pdf),
+      iconSize: 30,
+    );
+  }
+
+  Widget _buildLocationViewer(String location) {
+    return IconButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LocationPage(
+              location,
+            ),
+          ),
+        );
+      },
+      icon: const Icon(Icons.place),
       iconSize: 30,
     );
   }
@@ -553,6 +626,15 @@ class _SingleChatPageState extends State<SingleChatPage> {
     }
   }
 
+  Future<void> _pickLocation() async {
+    myPosition = await getCurrentLocation();
+
+    setState(() {
+      showMediaButtons = !showMediaButtons;
+    });
+    _sendLocationMessage();
+  }
+
   Future<void> _sendImageMessage() async {
     sending = true;
     if (_selectedImage != null) {
@@ -569,7 +651,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
                   content: imageUrl,
                   senderName: widget.singleChatEntity.username,
                   senderId: widget.singleChatEntity.uid,
-                  type: "TEXT"),
+                  type: "IMAGE"),
               channelId: widget.singleChatEntity.groupId)
           .then((value) {
         BlocProvider.of<GroupCubit>(context).updateGroup(
@@ -579,6 +661,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
           createAt: Timestamp.now(),
         ));
         _clear();
+        sending = false;
       });
     }
   }
@@ -611,6 +694,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
         createAt: Timestamp.now(),
       ));
       _clear();
+      sending = false;
     });
   }
 
@@ -643,6 +727,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
         createAt: Timestamp.now(),
       ));
       _clear();
+      sending = false;
     });
   }
 
@@ -680,8 +765,11 @@ class _SingleChatPageState extends State<SingleChatPage> {
     });
   }
 
-  Future<void> _sendTextMessage() async {
-    final messageContent = _messageController.text;
+  Future<void> _sendLocationMessage() async {
+    sending = true;
+
+    final messageContent = myPosition;
+    print('POSITION TO STRING: ${messageContent}');
 
     BlocProvider.of<ChatCubit>(context)
         .sendTextMessage(
@@ -690,7 +778,7 @@ class _SingleChatPageState extends State<SingleChatPage> {
                 content: messageContent,
                 senderName: widget.singleChatEntity.username,
                 senderId: widget.singleChatEntity.uid,
-                type: "TEXT"),
+                type: "LOCATION"),
             channelId: widget.singleChatEntity.groupId)
         .then((value) {
       BlocProvider.of<GroupCubit>(context).updateGroup(
@@ -700,6 +788,34 @@ class _SingleChatPageState extends State<SingleChatPage> {
         createAt: Timestamp.now(),
       ));
       _clear();
+      sending = false;
     });
+  }
+
+  Future<void> _sendTextMessage() async {
+    final messageContent = _messageController.text;
+    if (_selectedImage == null &&
+        _selectedVideo == null &&
+        _selectedPdf == null &&
+        _selectedAudio == null) {
+      BlocProvider.of<ChatCubit>(context)
+          .sendTextMessage(
+              textMessageEntity: TextMessageEntity(
+                  time: Timestamp.now(),
+                  content: messageContent,
+                  senderName: widget.singleChatEntity.username,
+                  senderId: widget.singleChatEntity.uid,
+                  type: "TEXT"),
+              channelId: widget.singleChatEntity.groupId)
+          .then((value) {
+        BlocProvider.of<GroupCubit>(context).updateGroup(
+            groupEntity: GroupEntity(
+          groupId: widget.singleChatEntity.groupId,
+          lastMessage: _messageController.text,
+          createAt: Timestamp.now(),
+        ));
+        _clear();
+      });
+    }
   }
 }

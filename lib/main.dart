@@ -1,5 +1,6 @@
 import 'package:chat_app_1/features/group/presentation/cubits/chat/chat_cubit.dart';
 import 'package:chat_app_1/features/group/presentation/cubits/group/group_cubit.dart';
+import 'package:chat_app_1/features/group/presentation/pages/location_page.dart';
 import 'package:chat_app_1/features/user/presentation/cubit/auth/auth_cubit.dart';
 import 'package:chat_app_1/features/user/presentation/cubit/credential/credential_cubit.dart';
 import 'package:chat_app_1/features/user/presentation/cubit/single_user/single_user_cubit.dart';
@@ -49,9 +50,7 @@ class MyApp extends StatelessWidget {
             return BlocBuilder<AuthCubit, AuthState>(
               builder: (context, authState) {
                 if (authState is Authenticated) {
-                  return HomePage(
-                    uid: authState.uid,
-                  );
+                  return HomePage(uid: authState.uid);
                 } else {
                   return const LoginPage();
                 }

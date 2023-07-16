@@ -76,7 +76,7 @@ class GroupFirebaseDataSourceImpl implements GroupFirebaseDataSource {
       receiverName: textMessageEntity.receiverName,
       time: textMessageEntity.time,
       messageId: messageId,
-      type: "TEXT",
+      type: textMessageEntity.type,
       videoUrl: textMessageEntity.videoUrl,
       imageUrl: textMessageEntity.imageUrl,
       audioUrl: textMessageEntity.audioUrl,
